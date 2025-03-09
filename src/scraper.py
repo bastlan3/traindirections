@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+import shutil
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -22,12 +23,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(ROOT_DIR, 'data')
 CACHE_FILE = os.path.join(DATA_DIR, 'railway_cache.json')
 ROUTES_FILE = os.path.join(DATA_DIR, 'train_routes.json')
+WEB_DATA_FILE = os.path.join(DATA_DIR, 'web_data.json')
 
-# Ensure data directory exists
+# Additional paths for deployment
+PUBLIC_DATA_DIR = os.path.join(ROOT_DIR, 'public_data')
+DOCS_DATA_DIR = os.path.join(ROOT_DIR, 'docs', 'data')
+
+# Ensure directories exist
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(PUBLIC_DATA_DIR, exist_ok=True)
+os.makedirs(DOCS_DATA_DIR, exist_ok=True)
 
 class RailwayDataScraper:
     """Scraper for collecting European railway routes data."""
@@ -611,8 +620,31 @@ def main():
     print(f"Routes by operator:\n{df['operator'].value_counts()}")
     print(f"Routes by country:\n{df['country'].value_counts()}")
     
-    print(f"Routes saved to {ROUTES_FILE}")
-
+    # Save web_data.json to all required locations
+    web_data = {
+        "stations": [{"name": route["origin"], "latitude": route["origin_lat"], "longitude": route["origin_lon"]} for route in routes],
+        "connections": {}
+    }
+    
+    # Build connections map
+    for route in routes:
+        origin = route["origin"]
+        if origin not in web_data["connections"]:
+            web_data["connections"][origin] = []
+        web_data["connections"][origin].append({
+            "name": route["destination"],
+            "latitude": route["destination_lat"],
+            "longitude": route["destination_lon"],
+            "operator": route["operator"],
+            "country": route["country"]
+        })
+    
+    # Save to all required locations
+    json.dump(web_data, open(WEB_DATA_FILE, 'w', encoding='utf-8'), indent=2)
+    shutil.copy2(WEB_DATA_FILE, os.path.join(PUBLIC_DATA_DIR, 'web_data.json'))
+    shutil.copy2(WEB_DATA_FILE, os.path.join(DOCS_DATA_DIR, 'web_data.json'))
+    
+    print(f"Data saved to all required locations")
 
 if __name__ == "__main__":
     main()
