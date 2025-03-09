@@ -414,6 +414,52 @@ class RailwayDataScraper:
         
         return routes
     
+    def scrape_national_rail(self) -> List[Dict]:
+        """
+        Scrape British railway (National Rail) routes.
+        
+        Returns:
+            List of route dictionaries
+        """
+        # This is a placeholder implementation
+        
+        logger.info("Scraping British railway routes")
+        
+        main_stations = [
+            {"name": "London King's Cross", "latitude": 51.5320, "longitude": -0.1240},
+            {"name": "London St Pancras", "latitude": 51.5322, "longitude": -0.1271},
+            {"name": "London Euston", "latitude": 51.5284, "longitude": -0.1331},
+            {"name": "London Paddington", "latitude": 51.5154, "longitude": -0.1755},
+            {"name": "Manchester Piccadilly", "latitude": 53.4774, "longitude": -2.2309},
+            {"name": "Birmingham New Street", "latitude": 52.4778, "longitude": -1.8991},
+            {"name": "Liverpool Lime Street", "latitude": 53.4075, "longitude": -2.9778},
+            {"name": "Leeds", "latitude": 53.7958, "longitude": -1.5484},
+            {"name": "Edinburgh Waverley", "latitude": 55.9519, "longitude": -3.1891},
+            {"name": "Glasgow Central", "latitude": 55.8590, "longitude": -4.2585},
+            {"name": "Cardiff Central", "latitude": 51.4760, "longitude": -3.1790},
+            {"name": "Bristol Temple Meads", "latitude": 51.4496, "longitude": -2.5811}
+        ]
+        
+        routes = []
+        
+        # Generate connections between these stations
+        for i, origin in enumerate(main_stations):
+            for j, destination in enumerate(main_stations):
+                if i != j:  # Don't connect a station to itself
+                    routes.append({
+                        "origin": origin["name"],
+                        "origin_lat": origin["latitude"],
+                        "origin_lon": origin["longitude"],
+                        "destination": destination["name"],
+                        "destination_lat": destination["latitude"],
+                        "destination_lon": destination["longitude"],
+                        "operator": "National Rail",
+                        "country": "United Kingdom",
+                        "route_type": "direct"
+                    })
+        
+        return routes
+
     def combine_international_routes(self) -> List[Dict]:
         """
         Create international connections between major cities.
@@ -570,6 +616,7 @@ class RailwayDataScraper:
         routes.extend(self.scrape_sbb())
         routes.extend(self.scrape_obb())
         routes.extend(self.scrape_ns())
+        routes.extend(self.scrape_national_rail())  # Add UK routes
         routes.extend(self.combine_international_routes())
         
         logger.info(f"Scraped {len(routes)} direct train routes")
